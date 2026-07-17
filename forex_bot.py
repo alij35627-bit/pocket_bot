@@ -42,16 +42,18 @@ def get_status(message):
 
 def run_bot():
     while True:
-        # منطق البوت المستقبلي هنا
+        # هنا سيتم إضافة منطق التداول الخاص بك لاحقاً
         time.sleep(60)
 
 if __name__ == "__main__":
-    # تنظيف الاتصالات القديمة قبل البدء
+    # تنظيف الاتصالات القديمة
     bot.remove_webhook()
     
-    # تشغيل البوت في خيط منفصل
+    # 1. تشغيل خيط التداول
     threading.Thread(target=run_bot, daemon=True).start()
     
-    # تشغيل البوت مباشرة
+    # 2. تشغيل خيط البوت
+    threading.Thread(target=lambda: bot.infinity_polling(timeout=10, long_polling_timeout=5), daemon=True).start()
+    
+    # 3. تشغيل سيرفر Flask
     app.run(host='0.0.0.0', port=8080)
-    bot.infinity_polling(timeout=10, long_polling_timeout=5)
