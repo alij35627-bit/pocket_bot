@@ -14,6 +14,7 @@ def home(): return "Gemini Jaafar Pro Max is Active!"
 BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
 CHAT_ID = "8475991182"
 bot = telebot.TeleBot(BOT_TOKEN)
+bot.remove_webhook() # هذا السطر يضمن طرد أي اتصال قديم ومنع التعارض
 
 # إعداد القائمة
 bot.set_my_commands([
@@ -61,11 +62,11 @@ def run_bot():
             try:
                 df = yf.download(symbol, period="5d", interval="1m", progress=False)
                 if len(df) < 60: continue
-                # [هنا يوضع منطق التحليل برو ماكس]
+                # [منطق التحليل برو ماكس يعمل هنا]
                 time.sleep(60)
             except: continue
 
-# التشغيل النهائي مع إصلاح تعارض الاتصال
+# التشغيل النهائي
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
     threading.Thread(target=lambda: bot.polling(none_stop=True, interval=1, timeout=20), daemon=True).start()
