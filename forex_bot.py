@@ -7,55 +7,56 @@ from datetime import datetime, timedelta
 BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
 CHAT_ID = "8475991182"
 
-def send_telegram_msg(message):
+def send_telegram_msg(msg):
     try:
-        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}", timeout=10)
+        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={msg}", timeout=5)
     except:
         pass
 
 symbols = ["EURUSD=X", "GBPUSD=X"]
 
-print("البوت يعمل الآن بنظام الحماية المطلقة...")
+print("البوت بدأ العمل بنظام الاستقرار العالي...")
 
 while True:
     for symbol in symbols:
         try:
-            data = yf.download(symbol, period="5d", interval="1m", progress=False)
+            # استخدام فترة زمنية أطول ومحاولة جلب البيانات
+            df = yf.download(symbol, period="5d", interval="1m", progress=False)
             
-            # التأكد أن البيانات تحتوي على عمود الإغلاق
-            if data is None or 'Close' not in data.columns:
+            if df.empty or 'Close' not in df.columns:
                 continue
                 
-            rsi_series = ta.rsi(data['Close'], length=14)
+            # حساب المؤشر
+            rsi = ta.rsi(df['Close'], length=14)
             
-            # التأكد أن المؤشر تم حسابه ولا يحتوي على قيم فارغة
-            if rsi_series is None or len(rsi_series) == 0:
+            if rsi is None or len(rsi) < 1:
                 continue
-                
-            current_rsi = rsi_series.iloc[-1]
             
-            if current_rsi is None or str(current_rsi) == 'nan':
+            val = rsi.iloc[-1]
+            
+            # التحقق من أن القيمة رقم
+            if val is None or str(val) == 'nan':
                 continue
-                
-            current_rsi = float(current_rsi)
+            
+            rsi_val = float(val)
             
             # تحديد المدة
-            if current_rsi < 20 or current_rsi > 80: duration = 5
-            elif current_rsi < 25 or current_rsi > 75: duration = 4
-            elif current_rsi < 27 or current_rsi > 73: duration = 3
-            elif current_rsi < 29 or current_rsi > 71: duration = 2
-            else: duration = 1
+            if rsi_val < 20 or rsi_val > 80: dur = 5
+            elif rsi_val < 25 or rsi_val > 75: dur = 4
+            elif rsi_val < 27 or rsi_val > 73: dur = 3
+            elif rsi_val < 29 or rsi_val > 71: dur = 2
+            else: dur = 1
             
-            next_minute = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
+            t = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
             
-            if current_rsi < 30:
-                send_telegram_msg(f"🚀 صفقة قوية (CALL)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
-                time.sleep(2)
-            elif current_rsi > 70:
-                send_telegram_msg(f"🔥 صفقة قوية (PUT)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
-                time.sleep(2)
-                
+            if rsi_val < 30:
+                send_telegram_msg(f"🚀 صفقة (CALL)\nالزوج: {symbol}\nالتوقيت: {t}\nالمدة: {dur} دقيقة\nRSI: {rsi_val:.2f}")
+                time.sleep(3)
+            elif rsi_val > 70:
+                send_telegram_msg(f"🔥 صفقة (PUT)\nالزوج: {symbol}\nالتوقيت: {t}\nالمدة: {dur} دقيقة\nRSI: {rsi_val:.2f}")
+                time.sleep(3)
+        
         except Exception:
-            continue # تجاهل أي خطأ فني والاستمرار للزوج التالي
+            continue
             
     time.sleep(60)
