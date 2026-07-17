@@ -26,47 +26,41 @@ while True:
             
             if not data.empty:
                 # حساب المؤشرات
-                data['RSI'] = ta.rsi(data['Close'], length=14)
-                data['SMA'] = ta.sma(data['Close'], length=10)
+                rsi_values = ta.rsi(data['Close'], length=14)
                 
-                current_rsi = float(data['RSI'].iloc[-1])
-                close_price = data['Close'].iloc[-1]
-                sma_price = data['SMA'].iloc[-1]
-                
-                # --- تحديد المدة تلقائياً (من 1 إلى 5 دقائق) ---
-                # كلما زاد ابتعاد السعر عن المتوسط (قوة الترند) وزاد تشبع الـ RSI، نزيد المدة
-                deviation = abs(close_price - sma_price)
-                
-                if current_rsi < 20 or current_rsi > 80: # إشارة قوية جداً
-                    duration = 5
-                elif current_rsi < 25 or current_rsi > 75:
-                    duration = 4
-                elif current_rsi < 27 or current_rsi > 73:
-                    duration = 3
-                elif current_rsi < 29 or current_rsi > 71:
-                    duration = 2
-                else: # إشارة عادية
-                    duration = 1
-                
-                # وقت الإشارة
-                next_minute = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
-                
-                # التحقق من الإشارة
-                if current_rsi < 30:
-                    msg = (f"🚀 صفقة قوية (CALL)\n"
-                           f"الزوج: {symbol}\n"
-                           f"التوقيت: {next_minute}\n"
-                           f"المدة الموصى بها: {duration} دقيقة\n"
-                           f"RSI: {current_rsi:.2f}")
-                    send_telegram_msg(msg)
-                
-                elif current_rsi > 70:
-                    msg = (f"🔥 صفقة قوية (PUT)\n"
-                           f"الزوج: {symbol}\n"
-                           f"التوقيت: {next_minute}\n"
-                           f"المدة الموصى بها: {duration} دقيقة\n"
-                           f"RSI: {current_rsi:.2f}")
-                    send_telegram_msg(msg)
+                # تأكد أن هناك قيم للـ RSI
+                if rsi_values is not None and not rsi_values.empty:
+                    current_rsi = rsi_values.iloc[-1]
+                    
+                    # التحقق من أن القيمة ليست فارغة قبل التحويل
+                    if current_rsi is not None:
+                        current_rsi = float(current_rsi)
+                        
+                        data['SMA'] = ta.sma(data['Close'], length=10)
+                        close_price = data['Close'].iloc[-1]
+                        sma_price = data['SMA'].iloc[-1]
+                        
+                        # --- تحديد المدة تلقائياً ---
+                        if current_rsi < 20 or current_rsi > 80:
+                            duration = 5
+                        elif current_rsi < 25 or current_rsi > 75:
+                            duration = 4
+                        elif current_rsi < 27 or current_rsi > 73:
+                            duration = 3
+                        elif current_rsi < 29 or current_rsi > 71:
+                            duration = 2
+                        else:
+                            duration = 1
+                        
+                        next_minute = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
+                        
+                        # التحقق من الإشارة
+                        if current_rsi < 30:
+                            msg = (f"🚀 صفقة قوية (CALL)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة الموصى بها: {duration} دقيقة\nRSI: {current_rsi:.2f}")
+                            send_telegram_msg(msg)
+                        elif current_rsi > 70:
+                            msg = (f"🔥 صفقة قوية (PUT)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة الموصى بها: {duration} دقيقة\nRSI: {current_rsi:.2f}")
+                            send_telegram_msg(msg)
         
         except Exception as e:
             print(f"خطأ في فحص {symbol}: {e}")
