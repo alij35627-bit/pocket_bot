@@ -15,7 +15,7 @@ BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
 CHAT_ID = "8475991182"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# إعداد القائمة والأزرار - تم إضافة أمر status
+# إعداد القائمة
 bot.set_my_commands([
     types.BotCommand("start", "تشغيل"), 
     types.BotCommand("report", "عرض التقرير"),
@@ -65,8 +65,8 @@ def run_bot():
                 time.sleep(60)
             except: continue
 
-# التشغيل النهائي
+# التشغيل النهائي مع إصلاح تعارض الاتصال
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
-    threading.Thread(target=lambda: bot.polling(none_stop=True), daemon=True).start()
+    threading.Thread(target=lambda: bot.polling(none_stop=True, interval=1, timeout=20), daemon=True).start()
     app.run(host='0.0.0.0', port=8080)
