@@ -1,10 +1,10 @@
 import telebot
 import time
+import os
 
-API_KEY = 'YOUR_TELEGRAM_BOT_TOKEN'
+# قراءة التوكن من متغيرات البيئة في Railway
+API_KEY = os.environ.get('API_KEY')
 bot = telebot.TeleBot(API_KEY)
-
-memory = []
 
 def analyze_market(prices):
     trend = prices[-1] - prices[0]
@@ -17,7 +17,7 @@ def analyze_market(prices):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.reply_to(message, "أرسل لي أسعار الإغلاق لآخر 5 شموع مفصولة بمسافة")
+    bot.reply_to(message, "البوت يعمل! أرسل لي أسعار الإغلاق لآخر 5 شموع مفصولة بمسافة")
 
 @bot.message_handler(func=lambda message: True)
 def handle_prices(message):
@@ -34,5 +34,7 @@ def handle_prices(message):
             bot.reply_to(message, result)
     except ValueError:
         bot.reply_to(message, "خطأ في البيانات. تأكد من إرسال أرقام فقط.")
+
+bot.polling(none_stop=True)
 
 bot.polling(none_stop=True)
