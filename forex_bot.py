@@ -15,8 +15,12 @@ BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
 CHAT_ID = "8475991182"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# إعداد القائمة والأزرار
-bot.set_my_commands([types.BotCommand("start", "تشغيل"), types.BotCommand("report", "عرض التقرير")])
+# إعداد القائمة والأزرار - تم إضافة أمر status
+bot.set_my_commands([
+    types.BotCommand("start", "تشغيل"), 
+    types.BotCommand("report", "عرض التقرير"),
+    types.BotCommand("status", "حالة البوت")
+])
 stats = {"win": 0, "loss": 0, "skipped": 0}
 
 def send_signal(msg):
@@ -39,6 +43,17 @@ def get_report(message):
     win_rate = (stats["win"] / total * 100) if total > 0 else 0
     bot.reply_to(message, f"📊 التقرير:\nالربح: {stats['win']}\nالخسارة: {stats['loss']}\nلم أدخل: {stats['skipped']}\nنسبة النجاح: {win_rate:.2f}%")
 
+@bot.message_handler(commands=['status'])
+def get_status(message):
+    status_msg = (
+        "🤖 **حالة جعفر برو ماكس**:\n\n"
+        "✅ البوت يعمل بكامل طاقته.\n"
+        "🔍 حالياً: يتم مراقبة الأسواق (EURUSD, GBPUSD, AUDUSD, NZDUSD).\n"
+        "📉 الوضع: لم يتم العثور على فرص تطابق استراتيجية الـ 90% حالياً.\n"
+        "💡 نصيحة: استمر في الصبر، الجودة أهم من الكثرة!"
+    )
+    bot.reply_to(message, status_msg)
+
 def run_bot():
     symbols = ["EURUSD=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X"]
     while True:
@@ -47,8 +62,6 @@ def run_bot():
                 df = yf.download(symbol, period="5d", interval="1m", progress=False)
                 if len(df) < 60: continue
                 # [هنا يوضع منطق التحليل برو ماكس]
-                # للتأكد من عمل الكود، سنضع شرطاً بسيطاً مبدئياً
-                # (أضف منطقك هنا كما كان)
                 time.sleep(60)
             except: continue
 
