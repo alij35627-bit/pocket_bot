@@ -17,52 +17,60 @@ def send_telegram_msg(message):
 
 symbols = ["EURUSD=X", "GBPUSD=X"]
 
-print("البوت يعمل الآن ويحلل البيانات...")
+print("البوت يعمل الآن بنظام الحماية الكاملة...")
 
 while True:
     for symbol in symbols:
         try:
-            # جلب البيانات
-            data = yf.download(symbol, period="2d", interval="1m", progress=False)
+            # 1. جلب البيانات مع فترة كافية
+            data = yf.download(symbol, period="5d", interval="1m", progress=False)
             
-            if not data.empty and len(data) > 15:
-                # حساب RSI
-                rsi_series = ta.rsi(data['Close'], length=14)
-                current_rsi = rsi_series.iloc[-1]
+            # 2. حماية من البيانات الفارغة
+            if data is None or data.empty or len(data) < 20:
+                continue
+            
+            # 3. حساب RSI بشكل آمن
+            rsi_series = ta.rsi(data['Close'], length=14)
+            
+            if rsi_series is None or rsi_series.empty:
+                continue
                 
-                # التحقق الصارم: إذا لم تكن القيمة رقماً، نتخطى هذه الدورة
-                if current_rsi is None or str(current_rsi) == 'nan':
-                    continue
-                
-                current_rsi = float(current_rsi)
-                
-                # تحديد المدة الزمنية تلقائياً (1-5 دقائق)
-                if current_rsi < 20 or current_rsi > 80:
-                    duration = 5
-                elif current_rsi < 25 or current_rsi > 75:
-                    duration = 4
-                elif current_rsi < 27 or current_rsi > 73:
-                    duration = 3
-                elif current_rsi < 29 or current_rsi > 71:
-                    duration = 2
-                else:
-                    duration = 1
-                
-                # وقت الإشارة
-                next_minute = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
-                
-                # منطق الإرسال
-                if current_rsi < 30:
-                    msg = (f"🚀 صفقة قوية (CALL)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
-                    send_telegram_msg(msg)
-                    time.sleep(2) # تأخير بسيط بين الإشارات
-                
-                elif current_rsi > 70:
-                    msg = (f"🔥 صفقة قوية (PUT)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
-                    send_telegram_msg(msg)
-                    time.sleep(2)
+            current_rsi = rsi_series.iloc[-1]
+            
+            # 4. حماية من قيم الـ nan أو None
+            if current_rsi is None or str(current_rsi) == 'nan':
+                continue
+            
+            # تحويل آمن للرقم
+            current_rsi = float(current_rsi)
+            
+            # 5. تحديد المدة (1-5 دقائق)
+            if current_rsi < 20 or current_rsi > 80:
+                duration = 5
+            elif current_rsi < 25 or current_rsi > 75:
+                duration = 4
+            elif current_rsi < 27 or current_rsi > 73:
+                duration = 3
+            elif current_rsi < 29 or current_rsi > 71:
+                duration = 2
+            else:
+                duration = 1
+            
+            next_minute = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
+            
+            # 6. إرسال الإشارات
+            if current_rsi < 30:
+                msg = (f"🚀 صفقة قوية (CALL)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
+                send_telegram_msg(msg)
+                time.sleep(2)
+            
+            elif current_rsi > 70:
+                msg = (f"🔥 صفقة قوية (PUT)\nالزوج: {symbol}\nالتوقيت: {next_minute}\nالمدة: {duration} دقيقة\nRSI: {current_rsi:.2f}")
+                send_telegram_msg(msg)
+                time.sleep(2)
 
         except Exception as e:
-            print(f"خطأ في {symbol}: {e}")
+            # نكتب الخطأ في اللوج لنعرف السبب دون توقف البوت
+            print(f"حدث خطأ مؤقت في {symbol}: {e}")
             
-    time.sleep(60) # البوت يفحص كل دقيقة
+    time.sleep(60)
