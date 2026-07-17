@@ -2,17 +2,14 @@ import yfinance as yf
 import pandas_ta as ta
 import time
 import requests
-import random
 from datetime import datetime, timedelta
 from flask import Flask
 import threading
 
-# إعداد خادم الويب
 app = Flask(__name__)
 @app.route('/')
-def home(): return "Jaafar Trading Bot is Active!"
+def home(): return "Gemini Jaafar Pro Max is Active and Hunting!"
 
-# إعدادات التليجرام
 BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
 CHAT_ID = "8475991182"
 
@@ -22,51 +19,51 @@ def send_msg(msg):
     except: pass
 
 def run_bot():
-    print("البوت بدأ العمل باستراتيجية جعفر المتقدمة...")
+    print("نظام جيمييني جعفر برو ماكس بدأ العمل...")
+    symbols = ["EURUSD=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X"]
+    
     while True:
-        for symbol in ["EURUSD=X", "GBPUSD=X"]:
+        for symbol in symbols:
             try:
                 df = yf.download(symbol, period="5d", interval="1m", progress=False)
-                if df.empty: continue
+                if len(df) < 60: continue
                 
-                # الاستراتيجيات
+                # التحليل الفني للمحترفين
                 close = df['Close']
-                ema5 = ta.ema(close, length=5)
-                ema20 = ta.ema(close, length=20)
                 rsi = ta.rsi(close, length=14)
-                stoch = ta.stoch(df['High'], df['Low'], close)
-                bb = ta.bbands(close, length=20)
+                macd = ta.macd(close)
+                ema_fast = ta.ema(close, length=9)
+                ema_slow = ta.ema(close, length=21)
                 
-                # تحليل المنطق
-                now = datetime.now()
-                t = (now + timedelta(minutes=1)).strftime("%H:%M")
+                # فلتر "ذكاء السوق": التحقق من استقرار الشموع
+                body_size = abs(df['Close'].iloc[-1] - df['Open'].iloc[-1])
+                avg_body = abs(df['Close'] - df['Open']).rolling(20).mean().iloc[-1]
                 
-                # شرط استراتيجية EMA Cross
-                if ema5.iloc[-2] < ema20.iloc[-2] and ema5.iloc[-1] > ema20.iloc[-1]:
-                    sig, strat, win = "شراء (CALL)", "EMA Cross", "85%"
-                # شرط استراتيجية Bollinger + RSI
-                elif rsi.iloc[-1] < 30 and close.iloc[-1] <= bb['BBL_20_2.0'].iloc[-1]:
-                    sig, strat, win = "شراء (CALL)", "Bollinger + RSI", "88%"
-                # شرط Stoch
-                elif stoch['STOCHk_14_3_3'].iloc[-1] < 20 and stoch['STOCHk_14_3_3'].iloc[-1] > stoch['STOCHd_14_3_3'].iloc[-1]:
-                    sig, strat, win = "شراء (CALL)", "Stochastic", "82%"
-                else: continue
-
-                # الرسالة المنظمة
-                msg = (f"🐺 Jaafar Trading Signals 🐺\n"
-                       f"══════════════════\n"
-                       f"👤 إليك يا جعفر، إشارة تداول جديدة:\n"
-                       f"💱 الزوج: {symbol.replace('=X', '')}\n"
-                       f"📈 الاتجاه: {sig}\n"
-                       f"💡 الاستراتيجية: {strat}\n"
-                       f"⏰ وقت الدخول: {t}\n"
-                       f"⏳ مدة الصفقة: 3 دقائق\n"
-                       f"📊 نسبة النجاح المتوقعة: {win}\n"
-                       f"══════════════════\n"
-                       f"اللهم يا ميسّر كل عسير، يسّر لنا هذه الصفقة واجعلها خيراً ورزقاً مباركاً.")
+                # إذا كانت الشمعة الحالية أكبر بـ 3 مرات من المتوسط، فهذا يعني "خبر" أو "تلاعب"
+                if body_size > (avg_body * 3): continue 
                 
-                send_msg(msg)
-                time.sleep(60) # انتظار دقيقة بين الإشارات
+                # منطق القرار: "برو ماكس"
+                score = 0
+                # شرط 1: تقاطع EMA
+                if ema_fast.iloc[-1] > ema_slow.iloc[-1]: score += 30
+                # شرط 2: RSI في مناطق مثالية
+                if 30 < rsi.iloc[-1] < 70: score += 30
+                # شرط 3: إيجابية الـ MACD
+                if macd['MACD_12_26_9'].iloc[-1] > macd['MACDs_12_26_9'].iloc[-1]: score += 40
+                
+                if score >= 90: # لن يرسل إلا إذا كانت الفرصة "كاملة"
+                    t = (datetime.now() + timedelta(minutes=1)).strftime("%H:%M")
+                    msg = (f"👑 **Gemini Jaafar Pro Max** 👑\n"
+                           f"══════════════════\n"
+                           f"👤 جعفر، السوق مهيأ تماماً:\n"
+                           f"💱 الزوج: {symbol.replace('=X', '')}\n"
+                           f"📈 التوصية: دخول قوي (BUY)\n"
+                           f"📊 مستوى الدقة: {score}%\n"
+                           f"⏰ وقت الدخول: {t}\n"
+                           f"══════════════════\n"
+                           f"اللهم يا ميسّر كل عسير، توكلنا على الله.")
+                    send_msg(msg)
+                    time.sleep(300) # راحة للبوت
             except: continue
         time.sleep(30)
 
