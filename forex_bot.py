@@ -1,25 +1,43 @@
-import telebot
-import os
-from flask import Flask, request
+import yfinance as yf
+import pandas_ta as ta
+import time
+import requests
 
-app = Flask(__name__)
-API_KEY = os.environ.get('API_KEY')
-CHAT_ID = os.environ.get('CHAT_ID') # سنضيف هذا لاحقاً ليعرف البوت لمن يرسل
-bot = telebot.TeleBot(API_KEY)
+# --- تم دمج بياناتك ---
+BOT_TOKEN = "8821873307:AAF6_suA6IibkRFpui3Bhfh7DwtZLR0VbbI"
+CHAT_ID = "8475991182"
+# ----------------------
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.json
-    if data:
-        message = data.get('message')
-        bot.send_message(CHAT_ID, message)
-        return "Message sent", 200
-    return "No data", 400
+def send_telegram_msg(message):
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
+        requests.get(url, timeout=10)
+    except Exception as e:
+        print(f"خطأ في إرسال التنبيه: {e}")
 
-if __name__ == '__main__':
-    # تشغيل Flask لاستقبال الإشارات
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+symbols = ["EURUSD=X", "GBPUSD=X"]
 
-bot.polling(none_stop=True)
+print("البوت يعمل الآن ويراقب السوق...")
 
-bot.polling(none_stop=True)
+while True:
+    for symbol in symbols:
+        try:
+            # جلب بيانات الزوج
+            data = yf.download(symbol, period="1d", interval="1m", progress=False)
+            
+            if not data.empty:
+                # حساب RSI
+                data['RSI'] = ta.rsi(data['Close'], length=14)
+                current_rsi = data['RSI'].iloc[-1]
+                
+                # التحقق من الشروط
+                if current_rsi < 30:
+                    send_telegram_msg(f"🚀 فرصة شراء (CALL) على {symbol}\nRSI الحالي: {current_rsi:.2f}")
+                elif current_rsi > 70:
+                    send_telegram_msg(f"🔥 فرصة بيع (PUT) على {symbol}\nRSI الحالي: {current_rsi:.2f}")
+        
+        except Exception as e:
+            print(f"خطأ في فحص {symbol}: {e}")
+            
+    # انتظار دقيقة للفحص التالي
+    time.sleep(60)
