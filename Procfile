@@ -1,1 +1,1 @@
-worker: python forex_bot.py
+web: python forex_bot.py
